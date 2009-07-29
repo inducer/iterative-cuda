@@ -37,7 +37,7 @@ using namespace iterative_cuda;
 
 
 
-template gpu_vector<int, float>;
-template gpu_vector<int, double>;
-template gpu_sparse_pkt_matrix<int, float>;
-template gpu_sparse_pkt_matrix<int, double>;
+template class gpu_vector<int, float>;
+template class gpu_vector<int, double>;
+template class gpu_sparse_pkt_matrix<int, float>;
+template class gpu_sparse_pkt_matrix<int, double>;

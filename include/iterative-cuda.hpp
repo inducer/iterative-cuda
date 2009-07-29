@@ -32,7 +32,8 @@ SOFTWARE.
 
 
 #include <utility>
-#include <cstdint>
+#include <memory>
+#include <stdint.h>
 
 
 
@@ -40,6 +41,9 @@ SOFTWARE.
 namespace iterative_cuda
 {
   template <typename ValueType, typename IndexType>
+  class gpu_vector_pimpl;
+
+  template <typename ValueType, typename IndexType=int>
   class gpu_vector
   {
     public:
@@ -66,11 +70,18 @@ namespace iterative_cuda
 
 
   template <typename ValueType, typename IndexType>
+  class gpu_sparse_pkt_matrix_pimpl;
+
+
+
+
+  template <typename ValueType, typename IndexType=int>
   class gpu_sparse_pkt_matrix
   {
     public:
       typedef IndexType index_type;
       typedef ValueType value_type;
+      typedef gpu_vector<value_type, index_type> vector_type;
 
     private:
       std::auto_ptr<
@@ -90,16 +101,22 @@ namespace iterative_cuda
       index_type column_count() const;
 
       void permute(
-          gpu_vector const &dest,
-          gpu_vector const &src) const;
+          vector_type const &dest,
+          vector_type const &src) const;
       void unpermute(
-          gpu_vector const &dest,
-          gpu_vector const &src) const;
+          vector_type const &dest,
+          vector_type const &src) const;
 
       void operator()(
-          gpu_vector const &dest,
-          gpu_vector const &src) const;
+          vector_type const &dest,
+          vector_type const &src) const;
   };
+
+
+
+
+  template <typename ValueType, typename IndexType>
+  class diagonal_preconditioner_pimpl;
 
 
 
@@ -109,11 +126,13 @@ namespace iterative_cuda
   {
     public:
       typedef GpuVector gpu_vector;
-      typedef typename GpuVector gpu_vector::index_type index_type;
-      typedef typename GpuVector gpu_vector::value_type value_type;
+      typedef typename gpu_vector::index_type index_type;
+      typedef typename gpu_vector::value_type value_type;
 
     private:
-      std::auto_ptr<diagonal_preconditioner_pimpl> m_pimpl;
+      std::auto_ptr<
+        diagonal_preconditioner_pimpl<value_type, index_type>
+        > m_pimpl;
 
     public:
       diagonal_preconditioner(gpu_vector const &vec);

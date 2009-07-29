@@ -45,7 +45,7 @@ namespace iterative_cuda
 
 
   template <typename ValueType, typename IndexType>
-  class gpu_sparse_pkt_matrix_pimpl
+  struct gpu_sparse_pkt_matrix_pimpl
   {
     // these are GPU pointers
     IndexType *permute_old_to_new;  

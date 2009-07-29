@@ -31,6 +31,11 @@ SOFTWARE.
 
 
 
+#include <cstdio>
+
+
+
+
 #define CUDA_CHK(NAME, ARGS) { \
   cudaError_t cuda_err_code = NAME ARGS; \
   if (cuda_err_code != cudaSuccess) { \
