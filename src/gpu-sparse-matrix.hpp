@@ -25,22 +25,23 @@ SOFTWARE.
 
 
 
-#ifndef _AAFADFJ_ITERATIVE_CUDA_GPU_VECTOR_HPP_SEEN
-#define _AAFADFJ_ITERATIVE_CUDA_GPU_VECTOR_HPP_SEEN
+#ifndef _AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
+#define _AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
 
 
 
 #include <iterative-cuda.hpp>
+#include <stdint.h>
 #include "helpers.hpp"
-#include "partition.hpp"
-#include "csr_to_pk.hpp"
+#include "spmv/partition.h"
+#include "spmv/csr_to_pkt.h"
 
 
 
 
 namespace iterative_cuda
 {
-  typedef std::uint32_t packed_index_type;
+  typedef uint32_t packed_index_type;
 
 
 
@@ -61,7 +62,7 @@ namespace iterative_cuda
     IndexType *coo_i;
     IndexType *coo_j;
     ValueType *coo_v;
-  }
+  };
 
 
 
@@ -73,24 +74,25 @@ namespace iterative_cuda
       const index_type *csr_row_pointers,
       const index_type *csr_column_indices,
       const value_type *csr_nonzeros)
-  : pimpl(new gpu_sparse_pkt_matrix_pimpl)
+  : pimpl(new gpu_sparse_pkt_matrix_pimpl<VT, IT>)
   {
     csr_matrix<index_type, value_type> csr_mat;
-    csr_mat.Ap = csr_row_pointers;
-    csr_mat.Aj = csr_column_indices;
-    csr_mat.Ax = csr_nonzeros;
+    csr_mat.Ap = const_cast<index_type *>(csr_row_pointers);
+    csr_mat.Aj = const_cast<index_type *>(csr_column_indices);
+    csr_mat.Ax = const_cast<value_type *>(csr_nonzeros);
 
     index_type rows_per_packet = 
-      (SHARED_MEM_AMOUNT - 100)
+      (SHARED_MEM_BYTES - 100)
       / (2*sizeof(value_type));
 
-    index_type block_count = divide_into(h, rows_per_packet);
+    index_type block_count = ICUDA_DIVIDE_INTO(row_count, rows_per_packet);
 
-    std::vector<IndexType> partition;
+    std::vector<index_type> partition;
     partition_csr(csr_mat, block_count, partition, /*Kway*/ true);
 
     pkt_matrix<index_type, value_type> pkt =
       csr_to_pkt(csr_mat, partition.data());
+
 
 
   }

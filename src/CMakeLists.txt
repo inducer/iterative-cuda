@@ -1,14 +1,14 @@
 set(BUILD_SHARED_LIBS ON)
-set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE ON)
 
-CUDA_COMPILE(CUDA_FILES host_instantiation.cpp)
-CUDA_COMPILE(CUDA_FILES instantiation.cu)
+include_directories(${METIS_INCLUDE_DIR})
+message("${METIS_INCLUDE_DIR} bitches")
 
-
-ADD_LIBRARY(iterativecuda
-  ${CUDA_FILES}
+cuda_add_library(iterativecuda
+  host_instantiation.cpp 
+  instantiation.cu
   )
 
-SET_TARGET_PROPERTIES(iterativecuda PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(iterativecuda ${METIS_LIBRARY})
+set_target_properties(iterativecuda PROPERTIES LINKER_LANGUAGE CXX)
 
-CUDA_BUILD_CLEAN_TARGET()
+cuda_build_clean_target()

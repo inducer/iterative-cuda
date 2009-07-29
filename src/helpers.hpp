@@ -33,12 +33,21 @@ SOFTWARE.
 
 #include <cstdio>
 #include <cstdlib>
-#include <cudart.h>
+#include <cuda_runtime.h>
 
 
 
 
-#define CUDA_CHK(NAME, ARGS) { \
+#define SHARED_MEM_BYTES 16384
+
+
+
+
+#define ICUDA_DIVIDE_INTO(x,y) ((x + y - 1)/y)
+
+
+
+#define ICUDA_CHK(NAME, ARGS) { \
   cudaError_t cuda_err_code = NAME ARGS; \
   if (cuda_err_code != cudaSuccess) { \
     printf("%s failed with code %d\n", #NAME, cuda_err_code); \

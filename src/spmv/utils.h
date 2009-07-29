@@ -7,7 +7,6 @@
 #include <cmath>
 #include <cstdio>
 
-#define SHARED_MEM_BYTES 16384
 
 
 

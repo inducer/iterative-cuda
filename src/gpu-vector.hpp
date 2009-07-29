@@ -52,7 +52,7 @@ namespace iterative_cuda
   gpu_vector<VT, IT>::gpu_vector(index_type size)
   : pimpl(new gpu_vector_pimpl<VT, IT>)
   {
-    CUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
+    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
     pimpl->size = size;
   }
 
@@ -63,9 +63,9 @@ namespace iterative_cuda
   gpu_vector<VT, IT>::gpu_vector(gpu_vector const &src)
   : pimpl(new gpu_vector_pimpl<VT, IT>)
   {
-    CUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, src.size()*sizeof(value_type)));
+    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, src.size()*sizeof(value_type)));
     pimpl->size = src.size();
-    CUDA_CHK(cudaMemcpy, (pimpl->gpu_data, src.pimpl->gpu_data, 
+    ICUDA_CHK(cudaMemcpy, (pimpl->gpu_data, src.pimpl->gpu_data, 
           src.size()*sizeof(value_type),
           cudaMemcpyDeviceToDevice));
   }
@@ -76,7 +76,7 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   gpu_vector<VT, IT>::~gpu_vector()
   {
-    CUDA_CHK(cudaFree, (pimpl->gpu_data));
+    ICUDA_CHK(cudaFree, (pimpl->gpu_data));
   }
 
 
@@ -92,7 +92,7 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   void gpu_vector<VT, IT>::from_cpu(value_type *cpu)
   {
-    CUDA_CHK(cudaMemcpy, (pimpl->gpu_data, cpu, 
+    ICUDA_CHK(cudaMemcpy, (pimpl->gpu_data, cpu, 
           size()*sizeof(value_type),
           cudaMemcpyHostToDevice));
   }
@@ -103,7 +103,7 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   void gpu_vector<VT, IT>::to_cpu(value_type *cpu)
   {
-    CUDA_CHK(cudaMemcpy, (cpu, pimpl->gpu_data,
+    ICUDA_CHK(cudaMemcpy, (cpu, pimpl->gpu_data,
           size()*sizeof(value_type),
           cudaMemcpyDeviceToHost));
   }

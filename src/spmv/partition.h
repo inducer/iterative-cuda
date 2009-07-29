@@ -6,6 +6,7 @@
 #include <vector>
 #include "sparse_formats.h"
 #include "sparse_operations.h"
+#include "sparse_conversions.h"
 #include "mem.h"
 
 ////////////////////////////////////////////////////////////////////////////////
