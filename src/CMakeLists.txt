@@ -1,0 +1,11 @@
+set(BUILD_SHARED_LIBS ON)
+set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE ON)
+CUDA_ADD_LIBRARY(iterativecuda
+  instantiation.cu
+  external_dependency.h
+  OPTIONS "-DSTUFF=blah blah"
+  RELEASE --use_fast_math -DNDEBUG
+  DEBUG -g -DDEBUG
+  )
+
+CUDA_BUILD_CLEAN_TARGET()

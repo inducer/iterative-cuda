@@ -5,15 +5,7 @@
 #include <assert.h>
 #include <cuda.h>
 #include <cmath>
-
-
-//macro to enforce intrawarp sychronization during emulation
-#ifdef __DEVICE_EMULATION__
-#define EMUSYNC __syncthreads()
-#else
-#define EMUSYNC
-#endif
-
+#include <cstdio>
 
 // ceil(x/y) for integers, used to determine # of blocks/warps etc.
 #define DIVIDE_INTO(x,y) ((x + y - 1)/y)
