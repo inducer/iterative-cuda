@@ -1,7 +1,7 @@
 set(BUILD_SHARED_LIBS ON)
 
 include_directories(${METIS_INCLUDE_DIR})
-message("${METIS_INCLUDE_DIR} bitches")
+message("${METIS_LIBRARY} bitches")
 
 cuda_add_library(iterativecuda
   host_instantiation.cpp 

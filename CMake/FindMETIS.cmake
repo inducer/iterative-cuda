@@ -13,16 +13,25 @@
 
 # derived from code by Christophe Prud'homme.
 
+SET(METIS_DIR "/usr" CACHE PATH "Root directory for the Metis install")
+
 FIND_PATH(METIS_INCLUDE_DIR metis.h
+  "${METIS_DIR}/include"
   /usr/local/include
   /usr/include
   /usr/include/metis
   )
 
 FIND_LIBRARY(METIS_LIBRARY metis
+  ${METIS_DIR}/lib/
+  ${METIS_DIR}/build/Linux-i686/
+  ${METIS_DIR}/build/Linux-x86_64/
   /usr/local/lib
   /usr/lib
   )
+
+MESSAGE("${METIS_INCLUDE_DIR} yo")
+MESSAGE("${METIS_LIBRARY} yo")
 
 IF(METIS_INCLUDE_DIR AND METIS_LIBRARY)
   SET( METIS_FOUND "YES" )
@@ -31,3 +40,5 @@ ELSE()
     MESSAGE(FATAL_ERROR "METIS not found")
   ENDIF()
 ENDIF()
+
+MARK_AS_ADVANCED(METIS_INCLUDE_DIR METIS_LIBRARY)

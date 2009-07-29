@@ -13,4 +13,4 @@ find_package(METIS REQUIRED)
 include_directories("${CMAKE_SOURCE_DIR}/include")
 include_directories("${CMAKE_SOURCE_DIR}/src/spmv/kernels")
 
-subdirs( src)
+subdirs(src)

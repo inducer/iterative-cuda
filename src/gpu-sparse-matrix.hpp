@@ -49,19 +49,7 @@ namespace iterative_cuda
   template <typename ValueType, typename IndexType>
   struct gpu_sparse_pkt_matrix_pimpl
   {
-    // these are GPU pointers
-    IndexType *permute_old_to_new;  
-    IndexType *permute_new_to_old;
-
-    packed_index_type *index_array;
-    ValueType *data_array;
-
-    IndexType *pos_start;
-    IndexType *pos_end;
-
-    IndexType *coo_i;
-    IndexType *coo_j;
-    ValueType *coo_v;
+    pkt_matrix<IndexType, ValueType> matrix;
   };
 
 
@@ -90,11 +78,53 @@ namespace iterative_cuda
     std::vector<index_type> partition;
     partition_csr(csr_mat, block_count, partition, /*Kway*/ true);
 
-    pkt_matrix<index_type, value_type> pkt =
-      csr_to_pkt(csr_mat, partition.data());
+    pimpl->matrix = csr_to_pkt(csr_mat, partition.data());
+  }
 
 
 
+
+  template <typename VT, typename IT>
+  gpu_sparse_pkt_matrix<VT, IT>::~gpu_sparse_pkt_matrix()
+  {
+    delete_pkt_matrix(pimpl->matrix);
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  gpu_sparse_pkt_matrix<VT, IT>::index_type
+  gpu_sparse_pkt_matrix<VT, IT>::row_count() const
+  { 
+    return pimpl->matrix.num_rows;
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  gpu_sparse_pkt_matrix<VT, IT>::index_type
+  gpu_sparse_pkt_matrix<VT, IT>::column_count() const
+  { 
+    return pimpl->matrix.num_cols;
+  }
+
+  template <typename VT, typename IT>
+  void gpu_sparse_pkt_matrix<VT, IT>::permute(
+      vector_type const &dest,
+      vector_type const &src) const
+  {
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  void gpu_sparse_pkt_matrix<VT, IT>::unpermute(
+      vector_type const &dest,
+      vector_type const &src) const
+  {
   }
 }
 
