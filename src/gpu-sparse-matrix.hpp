@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include <iterative-cuda.hpp>
 #include "helpers.hpp"
+#include "partition.hpp"
 #include "csr_to_pk.hpp"
 
 
@@ -78,6 +79,19 @@ namespace iterative_cuda
     csr_mat.Ap = csr_row_pointers;
     csr_mat.Aj = csr_column_indices;
     csr_mat.Ax = csr_nonzeros;
+
+    index_type rows_per_packet = 
+      (SHARED_MEM_AMOUNT - 100)
+      / (2*sizeof(value_type));
+
+    index_type block_count = divide_into(h, rows_per_packet);
+
+    std::vector<IndexType> partition;
+    partition_csr(csr_mat, block_count, partition, /*Kway*/ true);
+
+    pkt_matrix<index_type, value_type> pkt =
+      csr_to_pkt(csr_mat, partition.data());
+
 
   }
 }

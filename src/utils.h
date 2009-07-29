@@ -7,6 +7,10 @@
 #include <cmath>
 #include <cstdio>
 
+#define SHARED_MEM_BYTES 16384
+
+
+
 // ceil(x/y) for integers, used to determine # of blocks/warps etc.
 #define DIVIDE_INTO(x,y) ((x + y - 1)/y)
 

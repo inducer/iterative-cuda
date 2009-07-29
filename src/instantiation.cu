@@ -26,18 +26,8 @@ SOFTWARE.
 
 
 #include <iterative-cuda.hpp>
-#include "gpu-vector.hpp"
-#include "gpu-sparse-matrix.hpp"
 
 
 
 
 using namespace iterative_cuda;
-
-
-
-
-template class gpu_vector<int, float>;
-template class gpu_vector<int, double>;
-template class gpu_sparse_pkt_matrix<int, float>;
-template class gpu_sparse_pkt_matrix<int, double>;

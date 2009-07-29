@@ -1,10 +1,14 @@
 set(BUILD_SHARED_LIBS ON)
 set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE ON)
-CUDA_ADD_LIBRARY(iterativecuda
-  instantiation.cu
-  OPTIONS #"-DSTUFF=blah blah"
-  RELEASE --use_fast_math -DNDEBUG
-  DEBUG -g -DDEBUG
+
+CUDA_COMPILE(CUDA_FILES host_instantiation.cpp)
+CUDA_COMPILE(CUDA_FILES instantiation.cu)
+
+
+ADD_LIBRARY(iterativecuda
+  ${CUDA_FILES}
   )
+
+SET_TARGET_PROPERTIES(iterativecuda PROPERTIES LINKER_LANGUAGE CXX)
 
 CUDA_BUILD_CLEAN_TARGET()

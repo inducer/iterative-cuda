@@ -25,28 +25,20 @@ SOFTWARE.
 
 
 
-#ifndef _AAFADFJ_ITERATIVE_CUDA_HELPERS_HPP_SEEN
-#define _AAFADFJ_ITERATIVE_CUDA_HELPERS_HPP_SEEN
+#include <iterative-cuda.hpp>
+#include "gpu-vector.hpp"
+#include "gpu-sparse-matrix.hpp"
 
 
 
 
-#include <cstdio>
-#include <cstdlib>
-#include <cudart.h>
+using namespace iterative_cuda;
 
 
 
 
-#define CUDA_CHK(NAME, ARGS) { \
-  cudaError_t cuda_err_code = NAME ARGS; \
-  if (cuda_err_code != cudaSuccess) { \
-    printf("%s failed with code %d\n", #NAME, cuda_err_code); \
-    abort(); \
-  } \
-}
+template class gpu_vector<int, float>;
+template class gpu_vector<int, double>;
+template class gpu_sparse_pkt_matrix<int, float>;
+template class gpu_sparse_pkt_matrix<int, double>;
 
-
-
-
-#endif
