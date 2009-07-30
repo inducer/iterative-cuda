@@ -24,55 +24,48 @@ SOFTWARE.
 
 
 
-
-// Base-2 logarithm bithack.
-
-
-
-
-#ifndef AFJDFJSDFSD_ITERATIVE_CUDA_HEADER_SEEN_BITLOG_HPP
-#define AFJDFJSDFSD_ITERATIVE_CUDA_HEADER_SEEN_BITLOG_HPP
+#ifndef AAFADFJ_ITERATIVE_CUDA_DIAG_PRECONDITIONER_HPP_SEEN
+#define AAFADFJ_ITERATIVE_CUDA_DIAG_PRECONDITIONER_HPP_SEEN
 
 
 
 
-#include <climits>
-#include <stdint.h>
+#include <iterative-cuda.hpp>
+#include "elementwise.hpp"
 
 
 
 
 namespace iterative_cuda
 {
-  extern const char log_table_8[];
-
-  inline unsigned bitlog2_16(uint16_t v)
+  template <typename GpuVector>
+  struct diagonal_preconditioner_pimpl
   {
-    if (unsigned long t = v >> 8)
-      return 8+log_table_8[t];
-    else 
-      return log_table_8[v];
+    GpuVector const *vec;
+  };
+
+
+
+
+
+  template <class GpuVector>
+  inline diagonal_preconditioner<GpuVector>::
+  diagonal_preconditioner(gpu_vector_type const &vec)
+    : pimpl(new diagonal_preconditioner_pimpl<GpuVector>)
+  {
+    pimpl->vec = &vec;
   }
 
-  inline unsigned bitlog2_32(uint32_t v)
-  {
-    if (uint16_t t = v >> 16)
-      return 16+bitlog2_16(t);
-    else 
-      return bitlog2_16(v);
-  }
 
-  inline unsigned bitlog2(unsigned long v)
+
+
+  template <class GpuVector>
+  inline void diagonal_preconditioner<GpuVector>::operator()(
+      gpu_vector_type &result, gpu_vector_type const &op)
   {
-#if (ULONG_MAX != 4294967295)
-    if (uint32_t t = v >> 32)
-      return 32+bitlog2_32(t);
-    else 
-#endif
-      return bitlog2_32(v);
+    product(op, *pimpl->vec, result);
   }
 }
-
 
 
 

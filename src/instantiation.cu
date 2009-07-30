@@ -29,6 +29,7 @@ SOFTWARE.
 #include "gpu-vector.hpp"
 #include "cpu-sparse-matrix.hpp"
 #include "gpu-sparse-matrix.hpp"
+#include "diag-preconditioner.hpp"
 
 
 
@@ -46,3 +47,6 @@ template class cpu_sparse_csr_matrix<double>;
 
 template class gpu_sparse_pkt_matrix<float>;
 template class gpu_sparse_pkt_matrix<double>;
+
+template class diagonal_preconditioner<gpu_vector<float> >;
+template class diagonal_preconditioner<gpu_vector<double> >;

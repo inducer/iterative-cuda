@@ -25,8 +25,8 @@ SOFTWARE.
 
 
 
-#ifndef _AAFADFJ_ITERATIVE_CUDA_HPP_SEEN
-#define _AAFADFJ_ITERATIVE_CUDA_HPP_SEEN
+#ifndef AAFADFJ_ITERATIVE_CUDA_HPP_SEEN
+#define AAFADFJ_ITERATIVE_CUDA_HPP_SEEN
 
 
 
@@ -171,29 +171,30 @@ namespace iterative_cuda
 
 
 
-  template <typename ValueType, typename IndexType>
+  template <typename GpuVector>
   class diagonal_preconditioner_pimpl;
 
 
 
 
   template <class GpuVector>
-  class diagonal_preconditioner
+  class diagonal_preconditioner : private noncopyable
   {
     public:
-      typedef GpuVector gpu_vector;
-      typedef typename gpu_vector::index_type index_type;
-      typedef typename gpu_vector::value_type value_type;
+      typedef GpuVector gpu_vector_type;
+      typedef typename gpu_vector_type::index_type index_type;
+      typedef typename gpu_vector_type::value_type value_type;
 
     private:
       std::auto_ptr<
-        diagonal_preconditioner_pimpl<value_type, index_type>
-        > m_pimpl;
+        diagonal_preconditioner_pimpl<gpu_vector_type>
+        > pimpl;
 
     public:
-      diagonal_preconditioner(gpu_vector const &vec);
+      // keeps a reference to vec
+      diagonal_preconditioner(gpu_vector_type const &vec);
 
-      void operator()(gpu_vector const &op, gpu_vector& result);
+      void operator()(gpu_vector_type &result, gpu_vector_type const &op);
   };
 
 
@@ -201,12 +202,12 @@ namespace iterative_cuda
 
 
   template <typename ValueType, typename IndexType, typename Operator, typename Preconditioner>
-  void run_cg(
+  void gpu_cg(
       const Operator &a,
-      const Preconditioner &m_inv,
       gpu_vector<ValueType, IndexType> const &x,
       gpu_vector<ValueType, IndexType> const &b,
-      ValueType tol = 1e-8);
+      ValueType tol=1e-8,
+      const Preconditioner *m_inv=0);
 }
 
 

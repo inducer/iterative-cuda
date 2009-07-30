@@ -25,8 +25,8 @@ SOFTWARE.
 
 
 
-#ifndef _AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
-#define _AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
+#ifndef AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
+#define AAFADFJ_ITERATIVE_CUDA_GPU_SPARSE_MATRIX_HPP_SEEN
 
 
 
@@ -60,7 +60,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_sparse_pkt_matrix<VT, IT>::gpu_sparse_pkt_matrix(
+  inline gpu_sparse_pkt_matrix<VT, IT>::gpu_sparse_pkt_matrix(
       cpu_sparse_csr_matrix<VT, IT> const &csr_mat)
   : pimpl(new gpu_sparse_pkt_matrix_pimpl<VT, IT>)
   {
@@ -106,7 +106,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_sparse_pkt_matrix<VT, IT>::~gpu_sparse_pkt_matrix()
+  inline gpu_sparse_pkt_matrix<VT, IT>::~gpu_sparse_pkt_matrix()
   {
     delete_pkt_matrix(pimpl->matrix, DEVICE_MEMORY);
   }
@@ -115,7 +115,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  IT gpu_sparse_pkt_matrix<VT, IT>::row_count() const
+  inline IT gpu_sparse_pkt_matrix<VT, IT>::row_count() const
   {
     return pimpl->matrix.num_rows;
   }
@@ -124,7 +124,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  IT gpu_sparse_pkt_matrix<VT, IT>::column_count() const
+  inline IT gpu_sparse_pkt_matrix<VT, IT>::column_count() const
   {
     return pimpl->matrix.num_cols;
   }
@@ -133,7 +133,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  void gpu_sparse_pkt_matrix<VT, IT>::permute(
+  inline void gpu_sparse_pkt_matrix<VT, IT>::permute(
       vector_type &dest,
       vector_type const &src) const
   {
@@ -145,7 +145,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  void gpu_sparse_pkt_matrix<VT, IT>::unpermute(
+  inline void gpu_sparse_pkt_matrix<VT, IT>::unpermute(
       vector_type &dest,
       vector_type const &src) const
   {
@@ -158,7 +158,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  void gpu_sparse_pkt_matrix<VT, IT>::operator()(
+  inline void gpu_sparse_pkt_matrix<VT, IT>::operator()(
       vector_type &dest, vector_type const &src) const
   {
     spmv_pkt_device(pimpl->matrix, src.ptr(), dest.ptr());

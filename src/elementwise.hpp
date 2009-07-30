@@ -25,8 +25,8 @@ SOFTWARE.
 
 
 
-#ifndef _AAFADFJ_ITERATIVE_CUDA_ELEMENTWISE_HPP_SEEN
-#define _AAFADFJ_ITERATIVE_CUDA_ELEMENTWISE_HPP_SEEN
+#ifndef AAFADFJ_ITERATIVE_CUDA_ELEMENTWISE_HPP_SEEN
+#define AAFADFJ_ITERATIVE_CUDA_ELEMENTWISE_HPP_SEEN
 
 
 
@@ -182,12 +182,12 @@ namespace iterative_cuda
   void product(
       gpu_vector<VT, IT> const &x,
       gpu_vector<VT, IT> const &y,
-      gpu_vector<VT, IT> const &z)
+      gpu_vector<VT, IT> &z)
   {
     dim3 grid, block;
     splay(x.size(), grid, block);
     product_kernel<VT><<<grid, block>>>(
-        x.ptr(), y.ptr(), z.ptr());
+        x.ptr(), y.ptr(), z.ptr(), x.size());
   }
 }
 
