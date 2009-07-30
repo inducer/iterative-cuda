@@ -80,6 +80,11 @@ namespace iterative_cuda
       value_type *ptr();
       const value_type *ptr() const;
 
+      void set_to_linear_combination(
+          value_type a,
+          gpu_vector const &x,
+          value_type b,
+          gpu_vector const &y);
       gpu_vector *dot(gpu_vector const &b) const;
   };
 

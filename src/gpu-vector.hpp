@@ -33,12 +33,53 @@ SOFTWARE.
 #include <iterative-cuda.hpp>
 #include "helpers.hpp"
 #include "reduction.hpp"
+#include "elementwise.hpp"
+#include "mempool.hpp"
 
 
 
 
 namespace iterative_cuda
 {
+  class cuda_allocator
+  {
+    public:
+      typedef void *pointer_type;
+      typedef unsigned long size_type;
+
+      pointer_type allocate(size_type s)
+      {
+        void *result;
+        cudaError_t cuda_err_code = cudaMalloc(&result, s);
+        if (cuda_err_code == cudaErrorMemoryAllocation)
+          throw std::bad_alloc();
+        else if (cuda_err_code != cudaSuccess)
+        {
+          printf("cudaMalloc failed with code %d\n", cuda_err_code);
+          abort();
+        }
+        return result;
+      }
+
+      void free(pointer_type p)
+      {
+        ICUDA_CHK(cudaFree, (p));
+      }
+
+      void try_release_blocks()
+      { }
+  };
+
+
+
+  typedef memory_pool<cuda_allocator> cuda_mempool;
+
+  cuda_mempool &get_cuda_mempool();
+
+
+
+
+
   template <typename ValueType, typename IndexType>
   struct gpu_vector_pimpl
   {
@@ -50,10 +91,11 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT>::gpu_vector(index_type size)
+  inline gpu_vector<VT, IT>::gpu_vector(index_type size)
   : pimpl(new gpu_vector_pimpl<VT, IT>)
   {
-    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
+    pimpl->gpu_data = (value_type *) get_cuda_mempool().allocate(
+        size*sizeof(value_type));
     pimpl->size = size;
   }
 
@@ -61,10 +103,11 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT>::gpu_vector(value_type *cpu, index_type size)
+  inline gpu_vector<VT, IT>::gpu_vector(value_type *cpu, index_type size)
   : pimpl(new gpu_vector_pimpl<VT, IT>)
   {
-    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
+    pimpl->gpu_data = (value_type *) get_cuda_mempool().allocate(
+        size*sizeof(value_type));
     pimpl->size = size;
     from_cpu(cpu);
   }
@@ -73,12 +116,13 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT>::gpu_vector(gpu_vector const &src)
+  inline gpu_vector<VT, IT>::gpu_vector(gpu_vector const &src)
   : pimpl(new gpu_vector_pimpl<VT, IT>)
   {
-    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, src.size()*sizeof(value_type)));
+    pimpl->gpu_data = (value_type *) get_cuda_mempool().allocate(
+        src.size()*sizeof(value_type));
     pimpl->size = src.size();
-    ICUDA_CHK(cudaMemcpy, (pimpl->gpu_data, src.pimpl->gpu_data, 
+    ICUDA_CHK(cudaMemcpy, (ptr(), src.ptr(), 
           src.size()*sizeof(value_type),
           cudaMemcpyDeviceToDevice));
   }
@@ -87,25 +131,25 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT>::~gpu_vector()
+  inline gpu_vector<VT, IT>::~gpu_vector()
   {
-    ICUDA_CHK(cudaFree, (pimpl->gpu_data));
+    get_cuda_mempool().free(pimpl->gpu_data, pimpl->size*sizeof(value_type));
   }
 
 
 
 
   template <typename VT, typename IT>
-  IT gpu_vector<VT, IT>::size() const
+  inline IT gpu_vector<VT, IT>::size() const
   { return pimpl->size; }
 
 
 
 
   template <typename VT, typename IT>
-  void gpu_vector<VT, IT>::from_cpu(value_type *cpu)
+  inline void gpu_vector<VT, IT>::from_cpu(value_type *cpu)
   {
-    ICUDA_CHK(cudaMemcpy, (pimpl->gpu_data, cpu, 
+    ICUDA_CHK(cudaMemcpy, (ptr(), cpu, 
           size()*sizeof(value_type),
           cudaMemcpyHostToDevice));
   }
@@ -114,9 +158,9 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  void gpu_vector<VT, IT>::to_cpu(value_type *cpu)
+  inline void gpu_vector<VT, IT>::to_cpu(value_type *cpu)
   {
-    ICUDA_CHK(cudaMemcpy, (cpu, pimpl->gpu_data,
+    ICUDA_CHK(cudaMemcpy, (cpu, ptr(),
           size()*sizeof(value_type),
           cudaMemcpyDeviceToHost));
   }
@@ -125,21 +169,34 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr()
-  { return pimpl->gpu_data; }
+  inline gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr()
+  { return (value_type *) pimpl->gpu_data; }
 
 
 
 
   template <typename VT, typename IT>
-  const gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr() const
-  { return pimpl->gpu_data; }
+  inline const gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr() const
+  { return (const value_type *) pimpl->gpu_data; }
 
 
 
 
   template <typename VT, typename IT>
-  gpu_vector<VT, IT> *gpu_vector<VT, IT>::dot(gpu_vector const &b) const
+  inline void gpu_vector<VT, IT>::set_to_linear_combination(
+      value_type a,
+      gpu_vector const &x,
+      value_type b,
+      gpu_vector const &y)
+  {
+    lc2(a, x, b, y, *this);
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  inline gpu_vector<VT, IT> *gpu_vector<VT, IT>::dot(gpu_vector const &b) const
   {
     return inner_product(*this, b);
   }
