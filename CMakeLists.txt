@@ -7,6 +7,8 @@ set(CMAKE_MODULE_PATH
 
 project(iterative_cuda)
 
+set(CUDA_ARCH "compute_13" CACHE STRING "Target CUDA architecture")
+
 find_package(CUDA QUIET REQUIRED)
 find_package(METIS REQUIRED)
 

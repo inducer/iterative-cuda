@@ -35,6 +35,7 @@ SOFTWARE.
 #include "helpers.hpp"
 #include "spmv/partition.h"
 #include "spmv/csr_to_pkt.h"
+#include "spmv/utils.h"
 
 
 
@@ -69,7 +70,7 @@ namespace iterative_cuda
     csr_mat.Aj = const_cast<index_type *>(csr_column_indices);
     csr_mat.Ax = const_cast<value_type *>(csr_nonzeros);
 
-    index_type rows_per_packet = 
+    index_type rows_per_packet =
       (SHARED_MEM_BYTES - 100)
       / (2*sizeof(value_type));
 
@@ -78,7 +79,10 @@ namespace iterative_cuda
     std::vector<index_type> partition;
     partition_csr(csr_mat, block_count, partition, /*Kway*/ true);
 
-    pimpl->matrix = csr_to_pkt(csr_mat, partition.data());
+    pkt_matrix<index_type, value_type> host_matrix =
+      csr_to_pkt(csr_mat, partition.data());
+
+    pimpl->matrix = copy_matrix_to_device(host_matrix);
   }
 
 
@@ -87,16 +91,15 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   gpu_sparse_pkt_matrix<VT, IT>::~gpu_sparse_pkt_matrix()
   {
-    delete_pkt_matrix(pimpl->matrix);
+    delete_pkt_matrix(pimpl->matrix, DEVICE_MEMORY);
   }
 
 
 
 
   template <typename VT, typename IT>
-  gpu_sparse_pkt_matrix<VT, IT>::index_type
-  gpu_sparse_pkt_matrix<VT, IT>::row_count() const
-  { 
+  IT gpu_sparse_pkt_matrix<VT, IT>::row_count() const
+  {
     return pimpl->matrix.num_rows;
   }
 
@@ -104,17 +107,21 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  gpu_sparse_pkt_matrix<VT, IT>::index_type
-  gpu_sparse_pkt_matrix<VT, IT>::column_count() const
-  { 
+  IT gpu_sparse_pkt_matrix<VT, IT>::column_count() const
+  {
     return pimpl->matrix.num_cols;
   }
 
+
+
+
   template <typename VT, typename IT>
   void gpu_sparse_pkt_matrix<VT, IT>::permute(
-      vector_type const &dest,
+      vector_type &dest,
       vector_type const &src) const
   {
+    gather_device(dest.ptr(), src.ptr(), 
+        pimpl->matrix.permute_old_to_new, row_count());
   }
 
 
@@ -122,9 +129,11 @@ namespace iterative_cuda
 
   template <typename VT, typename IT>
   void gpu_sparse_pkt_matrix<VT, IT>::unpermute(
-      vector_type const &dest,
+      vector_type &dest,
       vector_type const &src) const
   {
+    gather_device(dest.ptr(), src.ptr(), 
+        pimpl->matrix.permute_new_to_old, row_count());
   }
 }
 

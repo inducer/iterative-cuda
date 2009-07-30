@@ -64,6 +64,7 @@ namespace iterative_cuda
       void to_cpu(value_type *cpu);
 
       value_type *ptr();
+      const value_type *ptr() const;
   };
 
 
@@ -100,16 +101,10 @@ namespace iterative_cuda
       index_type row_count() const;
       index_type column_count() const;
 
-      void permute(
-          vector_type const &dest,
-          vector_type const &src) const;
-      void unpermute(
-          vector_type const &dest,
-          vector_type const &src) const;
+      void permute(vector_type &dest, vector_type const &src) const;
+      void unpermute(vector_type &dest, vector_type const &src) const;
 
-      void operator()(
-          vector_type const &dest,
-          vector_type const &src) const;
+      void operator()(vector_type &dest, vector_type const &src) const;
   };
 
 
