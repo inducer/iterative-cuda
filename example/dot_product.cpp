@@ -36,57 +36,34 @@ using namespace iterative_cuda;
 
 int main(int argc, char **argv)
 {
-  if (argc != 2)
-  {
-    std::cerr << "usage: " << argv[0] << " matrix.mtx" << std::endl;
-    return 1;
-  }
   typedef float value_type;
-  typedef cpu_sparse_csr_matrix<value_type> cpu_mat_type;
-  typedef gpu_sparse_pkt_matrix<value_type> gpu_mat_type;
-  std::auto_ptr<cpu_mat_type> cpu_mat(
-      cpu_mat_type::read_matrix_market_file(argv[1]));
 
-  gpu_mat_type gpu_mat(*cpu_mat);
+  const unsigned n = 20000000;
+  value_type *x = new value_type[n];
+  value_type *y = new value_type[n];
 
-  // build host vectors
-  value_type *x = new value_type[gpu_mat.column_count()];
-  value_type *y1 = new value_type[gpu_mat.row_count()];
-  value_type *y2 = new value_type[gpu_mat.row_count()];
-
-  for (int i = 0; i < gpu_mat.column_count(); ++i)
+  for (int i = 0; i < n; ++i)
+  {
     x[i] = drand48();
-  for (int i = 0; i < gpu_mat.row_count(); ++i)
-  {
-    y1[i] = 0;
-    y2[i] = 0;
+    y[i] = drand48();
   }
 
-  // do gpu matrix multiply
-  gpu_vector<value_type> x_gpu(x, gpu_mat.column_count());
-  gpu_vector<value_type> y_gpu(y2, gpu_mat.row_count());
+  double ref_dot = 0;
 
-  gpu_mat(y_gpu, x_gpu);
+  for (int i = 0; i < n; ++i)
+    ref_dot += double(x[i])*double(y[i]);
 
-  y_gpu.to_cpu(y2);
-  synchronize_gpu();
+  typedef gpu_vector<value_type> vec_t;
+  vec_t x_gpu(x, n);
+  vec_t y_gpu(y, n);
 
-  // compute error
-  (*cpu_mat)(y1, x);
+  std::auto_ptr<vec_t> result(x_gpu.dot(y_gpu));
 
-  value_type error = 0;
-  value_type norm = 0;
+  value_type gpu_dot;
+  result->to_cpu(&gpu_dot);
 
-  for (int i = 0; i < gpu_mat.row_count(); ++i)
-  {
-    error += (y1[i]-y2[i])*(y1[i]-y2[i]);
-    norm += x[i]*x[i];
-  }
-  std::cerr << error/norm << std::endl;
-
-  delete[] x;
-  delete[] y1;
-  delete[] y2;
+  std::cerr << (ref_dot-gpu_dot)/ref_dot << std::endl;
 
   return 0;
 }
+

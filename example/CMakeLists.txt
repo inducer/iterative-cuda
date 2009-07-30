@@ -1,5 +1,5 @@
-add_executable(multiply_matrix
-  multiply_matrix.cpp)
-
+add_executable(multiply_matrix multiply_matrix.cpp)
 TARGET_LINK_LIBRARIES(multiply_matrix iterativecuda)
 
+add_executable(dot_product dot_product.cpp)
+TARGET_LINK_LIBRARIES(dot_product iterativecuda)

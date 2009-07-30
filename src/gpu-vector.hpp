@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include <iterative-cuda.hpp>
 #include "helpers.hpp"
+#include "reduction.hpp"
 
 
 
@@ -54,6 +55,18 @@ namespace iterative_cuda
   {
     ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
     pimpl->size = size;
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  gpu_vector<VT, IT>::gpu_vector(value_type *cpu, index_type size)
+  : pimpl(new gpu_vector_pimpl<VT, IT>)
+  {
+    ICUDA_CHK(cudaMalloc, ((void **) &pimpl->gpu_data, size*sizeof(value_type)));
+    pimpl->size = size;
+    from_cpu(cpu);
   }
 
 
@@ -121,6 +134,15 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   const gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr() const
   { return pimpl->gpu_data; }
+
+
+
+
+  template <typename VT, typename IT>
+  gpu_vector<VT, IT> *gpu_vector<VT, IT>::dot(gpu_vector const &b) const
+  {
+    return inner_product(*this, b);
+  }
 }
 
 

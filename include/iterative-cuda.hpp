@@ -68,6 +68,7 @@ namespace iterative_cuda
 
     public:
       gpu_vector(index_type size);
+      gpu_vector(value_type *cpu, index_type size);
       gpu_vector(gpu_vector const &src);
       ~gpu_vector();
 
@@ -78,6 +79,8 @@ namespace iterative_cuda
 
       value_type *ptr();
       const value_type *ptr() const;
+
+      gpu_vector *dot(gpu_vector const &b) const;
   };
 
 
