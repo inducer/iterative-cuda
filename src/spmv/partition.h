@@ -108,13 +108,14 @@ IndexType partition_csr(const csr_matrix<IndexType,ValueType>& graph,
     int numflag = 0, wgtflag = 0, edgecut;
     options[0] = 0; 
         
-    printf(" [A=A^T:");
     bool is_symmetric = csr_is_structurally_symmetric(graph);
+    /*
+    printf(" [A=A^T:");
     if (is_symmetric)
         printf(" yes]");
     else
         printf(" no]");
-
+        */
 
     if(is_symmetric){
         if(Kway)
@@ -160,7 +161,7 @@ IndexType partition_csr(const csr_matrix<IndexType,ValueType>& graph,
         delete_host_array(csr_AtA.Ap); delete_host_array(csr_AtA.Aj); delete_host_array(csr_AtA.Ax);
     }
 
-    printf(" [edgecut: %4.1f%%]", 100* (double) edgecut/ (double) graph.num_nonzeros);
+    // printf(" [edgecut: %4.1f%%]", 100* (double) edgecut/ (double) graph.num_nonzeros);
 
     //copy partition to vector
     std::copy(int_partition, int_partition + partition.size(), partition.begin());

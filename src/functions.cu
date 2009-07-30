@@ -26,23 +26,11 @@ SOFTWARE.
 
 
 #include <iterative-cuda.hpp>
-#include "gpu-vector.hpp"
-#include "cpu-sparse-matrix.hpp"
-#include "gpu-sparse-matrix.hpp"
 
 
 
 
-using namespace iterative_cuda;
-
-
-
-
-template class gpu_vector<float>;
-template class gpu_vector<double>;
-
-template class cpu_sparse_csr_matrix<float>;
-template class cpu_sparse_csr_matrix<double>;
-
-template class gpu_sparse_pkt_matrix<float>;
-template class gpu_sparse_pkt_matrix<double>;
+void iterative_cuda::synchronize_gpu()
+{
+  cudaThreadSynchronize();
+}

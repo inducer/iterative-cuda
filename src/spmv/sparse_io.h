@@ -55,7 +55,7 @@ coo_matrix<IndexType,ValueType> read_coo_matrix(const char * mm_filename)
     coo.J = new_host_array<IndexType>(coo.num_nonzeros);
     coo.V = new_host_array<ValueType>(coo.num_nonzeros);
 
-    printf("Reading sparse matrix from file (%s):",mm_filename);
+    // printf("Reading sparse matrix from file (%s):",mm_filename);
     fflush(stdout);
 
     if (mm_is_pattern(matcode)){
@@ -83,7 +83,7 @@ coo_matrix<IndexType,ValueType> read_coo_matrix(const char * mm_filename)
     }
 
     fclose(fid);
-    printf(" done\n");
+    // printf(" done\n");
 
     if( mm_is_symmetric(matcode) ){ //duplicate off diagonal entries
         IndexType off_diagonals = 0;

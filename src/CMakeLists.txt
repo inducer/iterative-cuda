@@ -3,7 +3,7 @@ set(BUILD_SHARED_LIBS ON)
 include_directories(${METIS_INCLUDE_DIR})
 
 cuda_add_library(iterativecuda
-  instantiation.cu spmv/mmio.c
+  instantiation.cu spmv/mmio.c functions.cu
   OPTIONS "-arch=${CUDA_ARCH}"
   )
 

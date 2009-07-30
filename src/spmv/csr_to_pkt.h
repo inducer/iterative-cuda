@@ -291,10 +291,12 @@ csr_to_pkt(const csr_matrix<IndexType,ValueType>& csr,
     }
 
 
+    /*
     IndexType total_values = total_local_work * threads_per_packet + global_nonzeros;
     printf(" [waste: %4.1f%% edgecut %4.1f%%]", 
             100 * (double) (total_values - csr.num_nonzeros) / (double) total_values,
             100 * (double) global_nonzeros / (double) csr.num_nonzeros);
+            */
 
     return p_mtx;
 }

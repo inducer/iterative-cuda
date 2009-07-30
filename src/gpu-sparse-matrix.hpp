@@ -32,12 +32,13 @@ SOFTWARE.
 
 #include <iterative-cuda.hpp>
 #include <stdint.h>
+#include <iostream>
 #include "helpers.hpp"
 #include "partition.h"
 #include "csr_to_pkt.h"
 #include "utils.h"
-#include "sparse_io.h"
 #include "kernels/spmv_pkt_device.cu.h"
+#include "cpu-sparse-matrix.hpp"
 
 
 
@@ -60,36 +61,45 @@ namespace iterative_cuda
 
   template <typename VT, typename IT>
   gpu_sparse_pkt_matrix<VT, IT>::gpu_sparse_pkt_matrix(
-      index_type row_count,
-      index_type column_count,
-      index_type nonzero_count,
-      const index_type *csr_row_pointers,
-      const index_type *csr_column_indices,
-      const value_type *csr_nonzeros)
+      cpu_sparse_csr_matrix<VT, IT> const &csr_mat)
   : pimpl(new gpu_sparse_pkt_matrix_pimpl<VT, IT>)
   {
-    csr_matrix<index_type, value_type> csr_mat;
-    csr_mat.num_rows = row_count;
-    csr_mat.num_cols = column_count;
-    csr_mat.num_nonzeros = nonzero_count;
-    csr_mat.Ap = const_cast<index_type *>(csr_row_pointers);
-    csr_mat.Aj = const_cast<index_type *>(csr_column_indices);
-    csr_mat.Ax = const_cast<value_type *>(csr_nonzeros);
-
     index_type rows_per_packet =
       (SHARED_MEM_BYTES - 100)
       / (2*sizeof(value_type));
 
-    index_type block_count = ICUDA_DIVIDE_INTO(row_count, rows_per_packet);
+    index_type block_count = ICUDA_DIVIDE_INTO(
+        csr_mat.row_count(), rows_per_packet);
 
     std::vector<index_type> partition;
-    partition.resize(row_count);
-    partition_csr(csr_mat, block_count, partition, /*Kway*/ true);
+
+    bool partition_ok;
+    partition.resize(csr_mat.row_count());
+    do
+    {
+      partition_csr(csr_mat.pimpl->matrix, block_count, partition, /*Kway*/ true);
+
+      std::vector<index_type> block_occupancy(block_count, 0);
+      for (index_type i = 0; i < csr_mat.row_count(); ++i)
+        ++block_occupancy[partition[i]];
+
+      partition_ok = true;
+      for (index_type i = 0; i < block_count; ++i)
+        if (block_occupancy[i] > rows_per_packet)
+        {
+          std::cerr << "Metis partition invalid, retrying..." << std::endl;
+          partition_ok = false;
+          block_count += 2 + int(1.02*block_count);
+          break;
+        }
+    }
+    while (!partition_ok);
 
     pkt_matrix<index_type, value_type> host_matrix =
-      csr_to_pkt(csr_mat, partition.data());
+      csr_to_pkt(csr_mat.pimpl->matrix, partition.data());
 
     pimpl->matrix = copy_matrix_to_device(host_matrix);
+    delete_pkt_matrix(host_matrix, HOST_MEMORY);
   }
 
 
@@ -152,27 +162,6 @@ namespace iterative_cuda
       vector_type &dest, vector_type const &src) const
   {
     spmv_pkt_device(pimpl->matrix, src.ptr(), dest.ptr());
-  }
-
-
-
-
-  template <class ValueType, class IndexType>
-  gpu_sparse_pkt_matrix<ValueType, IndexType> *
-  gpu_sparse_pkt_matrix<ValueType, IndexType>::read_matrix_market_file(
-      const char *fn)
-  {
-    csr_matrix<IndexType, ValueType> csr_mat =
-      read_csr_matrix<IndexType, ValueType>(fn);
-
-    typedef gpu_sparse_pkt_matrix<ValueType, IndexType> mat_tp;
-    std::auto_ptr<mat_tp> result(new mat_tp(
-          csr_mat.num_rows, csr_mat.num_cols, csr_mat.num_nonzeros,
-          csr_mat.Ap, csr_mat.Aj, csr_mat.Ax));
-
-    delete_csr_matrix(csr_mat, HOST_MEMORY);
-
-    return result.release();
   }
 }
 

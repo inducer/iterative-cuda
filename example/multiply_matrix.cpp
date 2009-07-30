@@ -42,32 +42,54 @@ int main(int argc, char **argv)
     return 1;
   }
   typedef float entry_type;
-  typedef gpu_sparse_pkt_matrix<entry_type> mat_type;
-  std::auto_ptr<mat_type> mat(
-      mat_type::read_matrix_market_file(argv[1]));
+  typedef cpu_sparse_csr_matrix<entry_type> cpu_mat_type;
+  typedef gpu_sparse_pkt_matrix<entry_type> gpu_mat_type;
+  std::auto_ptr<cpu_mat_type> cpu_mat(
+      cpu_mat_type::read_matrix_market_file(argv[1]));
+
+  gpu_mat_type gpu_mat(*cpu_mat);
 
   // build host vectors
-  entry_type *x = new entry_type[mat->column_count()];
-  entry_type *y = new entry_type[mat->row_count()];
+  entry_type *x = new entry_type[gpu_mat.column_count()];
+  entry_type *y1 = new entry_type[gpu_mat.row_count()];
+  entry_type *y2 = new entry_type[gpu_mat.row_count()];
 
-  for (int i = 0; i < mat->column_count(); ++i)
+  for (int i = 0; i < gpu_mat.column_count(); ++i)
     x[i] = drand48();
-  for (int i = 0; i < mat->row_count(); ++i)
-    y[i] = 0;
+  for (int i = 0; i < gpu_mat.row_count(); ++i)
+  {
+    y1[i] = 0;
+    y2[i] = 0;
+  }
 
-  gpu_vector<entry_type> x_gpu(mat->column_count());
-  gpu_vector<entry_type> y_gpu(mat->row_count());
+  // do gpu matrix multiply
+  gpu_vector<entry_type> x_gpu(gpu_mat.column_count());
+  gpu_vector<entry_type> y_gpu(gpu_mat.row_count());
 
   x_gpu.from_cpu(x);
-  y_gpu.from_cpu(y);
+  y_gpu.from_cpu(y2);
 
-  (*mat)(y_gpu, x_gpu);
+  gpu_mat(y_gpu, x_gpu);
 
-  y_gpu.to_cpu(y);
+  y_gpu.to_cpu(y2);
   synchronize_gpu();
 
+  // compute error
+  (*cpu_mat)(y1, x);
+
+  entry_type error = 0;
+  entry_type norm = 0;
+
+  for (int i = 0; i < gpu_mat.row_count(); ++i)
+  {
+    error += (y1[i]-y2[i])*(y1[i]-y2[i]);
+    norm += x[i]*x[i];
+  }
+  std::cerr << error/norm << std::endl;
+
   delete[] x;
-  delete[] y;
+  delete[] y1;
+  delete[] y2;
 
   return 0;
 }

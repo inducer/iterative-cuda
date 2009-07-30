@@ -83,13 +83,52 @@ namespace iterative_cuda
 
 
 
+  template <typename ValueType, typename IndexType=int>
+  class gpu_sparse_pkt_matrix;
+
+  template <typename ValueType, typename IndexType>
+  class cpu_sparse_csr_matrix_pimpl;
+
+  template <typename ValueType, typename IndexType=int>
+  class cpu_sparse_csr_matrix
+  {
+    public:
+      typedef IndexType index_type;
+      typedef ValueType value_type;
+
+    private:
+      std::auto_ptr<
+        cpu_sparse_csr_matrix_pimpl<value_type, index_type>
+        > pimpl;
+
+    public:
+      cpu_sparse_csr_matrix(
+          index_type row_count,
+          index_type column_count,
+          index_type nonzero_count,
+          const index_type *csr_row_pointers,
+          const index_type *csr_column_indices,
+          const value_type *csr_nonzeros);
+      ~cpu_sparse_csr_matrix();
+
+      index_type row_count() const;
+      index_type column_count() const;
+
+      void operator()(value_type *y, value_type const *x) const;
+      void extract_diagonal(value_type *d) const;
+
+      static cpu_sparse_csr_matrix *read_matrix_market_file(const char *fn);
+
+      friend class gpu_sparse_pkt_matrix<value_type, index_type>;
+  };
+
+
+
+
   template <typename ValueType, typename IndexType>
   class gpu_sparse_pkt_matrix_pimpl;
 
-
-
-
-  template <typename ValueType, typename IndexType=int>
+  template <typename ValueType, typename IndexType>
   class gpu_sparse_pkt_matrix// : noncopyable
   {
     public:
@@ -104,12 +143,7 @@ namespace iterative_cuda
 
     public:
       gpu_sparse_pkt_matrix(
-          index_type row_count,
-          index_type column_count,
-          index_type nonzero_count,
-          const index_type *csr_row_pointers,
-          const index_type *csr_column_indices,
-          const value_type *csr_nonzeros);
+          cpu_sparse_csr_matrix<value_type, index_type> const &csr_mat);
       ~gpu_sparse_pkt_matrix();
 
       index_type row_count() const;
@@ -119,8 +153,6 @@ namespace iterative_cuda
       void unpermute(vector_type &dest, vector_type const &src) const;
 
       void operator()(vector_type &dest, vector_type const &src) const;
-
-      static gpu_sparse_pkt_matrix *read_matrix_market_file(const char *fn);
   };
 
 
