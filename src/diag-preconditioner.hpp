@@ -63,7 +63,7 @@ namespace iterative_cuda
   inline void diagonal_preconditioner<GpuVector>::operator()(
       gpu_vector_type &result, gpu_vector_type const &op)
   {
-    product(op, *pimpl->vec, result);
+    multiply(result, op, *pimpl->vec);
   }
 }
 

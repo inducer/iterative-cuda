@@ -140,6 +140,22 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
+  inline gpu_vector<VT, IT> &gpu_vector<VT, IT>::
+  operator=(gpu_vector const &src)
+  {
+    if (src.size() != size())
+      throw std::runtime_error("cannot change gpu_vector size by assignment");
+
+    ICUDA_CHK(cudaMemcpy, (ptr(), src.ptr(), 
+          src.size()*sizeof(value_type),
+          cudaMemcpyDeviceToDevice));
+    return *this;
+  }
+
+
+
+
+  template <typename VT, typename IT>
   inline IT gpu_vector<VT, IT>::size() const
   { return pimpl->size; }
 
@@ -189,7 +205,21 @@ namespace iterative_cuda
       value_type b,
       gpu_vector const &y)
   {
-    lc2(a, x, b, y, *this);
+    lc2(*this, a, x, b, y);
+  }
+
+
+
+
+  template <typename VT, typename IT>
+  inline void gpu_vector<VT, IT>::set_to_linear_combination(
+      value_type a,
+      gpu_vector const &x,
+      value_type b0,
+      gpu_vector const &b1,
+      gpu_vector const &y)
+  {
+    lc2(*this, a, x, b0, b1, y);
   }
 
 

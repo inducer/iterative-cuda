@@ -95,9 +95,10 @@ namespace iterative_cuda
 
   template <class ValueType>
   __global__ void lc2_kernel(
+      ValueType *z,
       ValueType a, ValueType const *x,
       ValueType b, ValueType const *y,
-      ValueType *z, unsigned n)
+      unsigned n)
   {
     unsigned tid = threadIdx.x;
     unsigned total_threads = gridDim.x*blockDim.x;
@@ -113,20 +114,20 @@ namespace iterative_cuda
 
   template <class ValueType>
   __global__ void lc2p_kernel(
-      ValueType const *a_ptr, ValueType const *x,
-      ValueType const *b_ptr, ValueType const *y,
-      ValueType *z, unsigned n)
+      ValueType *z,
+      ValueType a, ValueType const *x,
+      ValueType b0, ValueType const *b1_ptr, ValueType const *y,
+      unsigned n)
   {
     unsigned tid = threadIdx.x;
     unsigned total_threads = gridDim.x*blockDim.x;
     unsigned cta_start = blockDim.x*blockIdx.x;
     unsigned i;
 
-    ValueType a = *a_ptr;
-    ValueType b = *b_ptr;
+    ValueType b1 = *b1_ptr;
 
     for (i = cta_start + tid; i < n; i += total_threads) 
-      z[i] = a*x[i] + b*y[i];
+      z[i] = a*x[i] + b0*b1*y[i];
   }
 
 
@@ -134,14 +135,15 @@ namespace iterative_cuda
 
   template <class VT, class IT>
   void lc2(
+      gpu_vector<VT, IT> &z,
       VT a, gpu_vector<VT, IT> const &x,
-      VT b, gpu_vector<VT, IT> const &y,
-      gpu_vector<VT, IT> &z)
+      VT b, gpu_vector<VT, IT> const &y
+      )
   {
     dim3 grid, block;
     splay(x.size(), grid, block);
     lc2_kernel<VT><<<grid, block>>>(
-        a, x.ptr(), b, y.ptr(), z.ptr(), x.size());
+        z.ptr(), a, x.ptr(), b, y.ptr(), x.size());
   }
 
 
@@ -149,22 +151,23 @@ namespace iterative_cuda
 
   template <class VT, class IT>
   void lc2(
-      gpu_vector<VT, IT> const &a, gpu_vector<VT, IT> const &x,
-      gpu_vector<VT, IT> const &b, gpu_vector<VT, IT> const &y,
-      gpu_vector<VT, IT> &z)
+      gpu_vector<VT, IT> &z,
+      VT a, gpu_vector<VT, IT> const &x,
+      VT b0, gpu_vector<VT, IT> const &b1, gpu_vector<VT, IT> const &y
+      )
   {
     dim3 grid, block;
     splay(x.size(), grid, block);
     lc2p_kernel<VT><<<grid, block>>>(
-        a.ptr(), x.ptr(), b.ptr(), y.ptr(), z.ptr(), x.size());
+        z.ptr(), a, x.ptr(), b0, b1.ptr(), y.ptr(), x.size());
   }
 
 
 
 
   template <class ValueType>
-  __global__ void product_kernel(
-      ValueType const *x, ValueType const *y, ValueType *z, unsigned n)
+  __global__ void multiply_kernel(
+      ValueType *z, ValueType const *x, ValueType const *y, unsigned n)
   {
     unsigned tid = threadIdx.x;
     unsigned total_threads = gridDim.x*blockDim.x;
@@ -179,15 +182,48 @@ namespace iterative_cuda
 
 
   template <class VT, class IT>
-  void product(
+  void multiply(
+      gpu_vector<VT, IT> &z,
       gpu_vector<VT, IT> const &x,
-      gpu_vector<VT, IT> const &y,
-      gpu_vector<VT, IT> &z)
+      gpu_vector<VT, IT> const &y
+      )
   {
     dim3 grid, block;
     splay(x.size(), grid, block);
-    product_kernel<VT><<<grid, block>>>(
-        x.ptr(), y.ptr(), z.ptr(), x.size());
+    multiply_kernel<VT><<<grid, block>>>(
+        z.ptr(), x.ptr(), y.ptr(), x.size());
+  }
+
+
+
+
+  template <class ValueType>
+  __global__ void divide_kernel(
+      ValueType *z, ValueType const *x, ValueType const *y, unsigned n)
+  {
+    unsigned tid = threadIdx.x;
+    unsigned total_threads = gridDim.x*blockDim.x;
+    unsigned cta_start = blockDim.x*blockIdx.x;
+    unsigned i;
+
+    for (i = cta_start + tid; i < n; i += total_threads) 
+      z[i] = x[i]/y[i];
+  }
+
+
+
+
+  template <class VT, class IT>
+  void divide(
+      gpu_vector<VT, IT> &z,
+      gpu_vector<VT, IT> const &x,
+      gpu_vector<VT, IT> const &y
+      )
+  {
+    dim3 grid, block;
+    splay(x.size(), grid, block);
+    divide_kernel<VT><<<grid, block>>>(
+        z.ptr(), x.ptr(), y.ptr(), x.size());
   }
 }
 

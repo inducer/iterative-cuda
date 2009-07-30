@@ -72,6 +72,8 @@ namespace iterative_cuda
       gpu_vector(gpu_vector const &src);
       ~gpu_vector();
 
+      gpu_vector &operator=(gpu_vector const &src);
+
       index_type size() const;
 
       void from_cpu(value_type *cpu);
@@ -85,6 +87,14 @@ namespace iterative_cuda
           gpu_vector const &x,
           value_type b,
           gpu_vector const &y);
+
+      void set_to_linear_combination(
+          value_type a,
+          gpu_vector const &x,
+          value_type b0,
+          gpu_vector const &b1,
+          gpu_vector const &y);
+
       gpu_vector *dot(gpu_vector const &b) const;
   };
 
@@ -166,13 +176,23 @@ namespace iterative_cuda
 
 
 
-  void synchronize_gpu();
-
-
-
-
   template <typename GpuVector>
   class diagonal_preconditioner_pimpl;
+
+
+
+
+  template <class GpuVector>
+  class identity_preconditioner : private noncopyable
+  {
+    public:
+      typedef GpuVector gpu_vector_type;
+
+      void operator()(gpu_vector_type &result, gpu_vector_type const &op)
+      {
+        result = op;
+      }
+  };
 
 
 
@@ -200,6 +220,8 @@ namespace iterative_cuda
 
 
 
+
+  void synchronize_gpu();
 
   template <typename ValueType, typename IndexType, typename Operator, typename Preconditioner>
   void gpu_cg(

@@ -30,6 +30,7 @@ SOFTWARE.
 #include "cpu-sparse-matrix.hpp"
 #include "gpu-sparse-matrix.hpp"
 #include "diag-preconditioner.hpp"
+#include "cg.hpp"
 
 
 
@@ -39,14 +40,27 @@ using namespace iterative_cuda;
 
 
 
-template class gpu_vector<float>;
-template class gpu_vector<double>;
+#define INSTANTIATE(TP) \
+  template class gpu_vector<TP>; \
+  template class cpu_sparse_csr_matrix<TP>; \
+  template class gpu_sparse_pkt_matrix<TP>; \
+  template class diagonal_preconditioner<gpu_vector<TP> >; \
+  void gpu_cg( \
+      const gpu_sparse_pkt_matrix<TP> &a, \
+      const identity_preconditioner<gpu_vector<TP> > m_inv, \
+      gpu_vector<TP> const &x, \
+      gpu_vector<TP> const &b, \
+      TP tol, \
+      unsigned max_iterations); \
+  void gpu_cg( \
+      const gpu_sparse_pkt_matrix<TP> &a, \
+      const diagonal_preconditioner<gpu_vector<TP> > m_inv, \
+      gpu_vector<TP> const &x, \
+      gpu_vector<TP> const &b, \
+      TP tol, \
+      unsigned max_iterations);
+  
 
-template class cpu_sparse_csr_matrix<float>;
-template class cpu_sparse_csr_matrix<double>;
 
-template class gpu_sparse_pkt_matrix<float>;
-template class gpu_sparse_pkt_matrix<double>;
-
-template class diagonal_preconditioner<gpu_vector<float> >;
-template class diagonal_preconditioner<gpu_vector<double> >;
+INSTANTIATE(float);
+INSTANTIATE(double);
