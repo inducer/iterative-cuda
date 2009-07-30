@@ -93,7 +93,7 @@ IndexType partition_csr(const csr_matrix<IndexType,ValueType>& graph,
 
     if(graph.num_rows != graph.num_cols){
         printf("matrix is nonsquare\n");
-        exit(EXIT_FAILURE);
+        abort();
     }
 
     if(num_parts < 2){  

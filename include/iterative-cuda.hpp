@@ -40,11 +40,24 @@ SOFTWARE.
 
 namespace iterative_cuda
 {
+  class noncopyable
+  {
+   protected:
+      noncopyable() {}
+      ~noncopyable() {}
+   private:
+      noncopyable( const noncopyable& );
+      const noncopyable& operator=( const noncopyable& );
+  };
+
+
+
+
   template <typename ValueType, typename IndexType>
   class gpu_vector_pimpl;
 
   template <typename ValueType, typename IndexType=int>
-  class gpu_vector
+  class gpu_vector// : noncopyable
   {
     public:
       typedef IndexType index_type;
@@ -77,7 +90,7 @@ namespace iterative_cuda
 
 
   template <typename ValueType, typename IndexType=int>
-  class gpu_sparse_pkt_matrix
+  class gpu_sparse_pkt_matrix// : noncopyable
   {
     public:
       typedef IndexType index_type;
@@ -93,6 +106,7 @@ namespace iterative_cuda
       gpu_sparse_pkt_matrix(
           index_type row_count,
           index_type column_count,
+          index_type nonzero_count,
           const index_type *csr_row_pointers,
           const index_type *csr_column_indices,
           const value_type *csr_nonzeros);
@@ -105,7 +119,14 @@ namespace iterative_cuda
       void unpermute(vector_type &dest, vector_type const &src) const;
 
       void operator()(vector_type &dest, vector_type const &src) const;
+
+      static gpu_sparse_pkt_matrix *read_matrix_market_file(const char *fn);
   };
+
+
+
+
+  void synchronize_gpu();
 
 
 
@@ -134,6 +155,7 @@ namespace iterative_cuda
 
       void operator()(gpu_vector const &op, gpu_vector& result);
   };
+
 
 
 

@@ -26,26 +26,48 @@ SOFTWARE.
 
 
 #include <iterative-cuda.hpp>
-#include "gpu-vector.hpp"
-#include "gpu-sparse-matrix.hpp"
+#include <iostream>
+#include <cstdlib>
 
 
 
 
 using namespace iterative_cuda;
 
-
-
-
-template class gpu_vector<float>;
-template class gpu_vector<double>;
-template class gpu_sparse_pkt_matrix<float>;
-template class gpu_sparse_pkt_matrix<double>;
-
-
-
-
-void iterative_cuda::synchronize_gpu()
+int main(int argc, char **argv)
 {
-  cudaThreadSynchronize();
+  if (argc != 2)
+  {
+    std::cerr << "usage: " << argv[0] << " matrix.mtx" << std::endl;
+    return 1;
+  }
+  typedef float entry_type;
+  typedef gpu_sparse_pkt_matrix<entry_type> mat_type;
+  std::auto_ptr<mat_type> mat(
+      mat_type::read_matrix_market_file(argv[1]));
+
+  // build host vectors
+  entry_type *x = new entry_type[mat->column_count()];
+  entry_type *y = new entry_type[mat->row_count()];
+
+  for (int i = 0; i < mat->column_count(); ++i)
+    x[i] = drand48();
+  for (int i = 0; i < mat->row_count(); ++i)
+    y[i] = 0;
+
+  gpu_vector<entry_type> x_gpu(mat->column_count());
+  gpu_vector<entry_type> y_gpu(mat->row_count());
+
+  x_gpu.from_cpu(x);
+  y_gpu.from_cpu(y);
+
+  (*mat)(y_gpu, x_gpu);
+
+  y_gpu.to_cpu(y);
+  synchronize_gpu();
+
+  delete[] x;
+  delete[] y;
+
+  return 0;
 }

@@ -13,6 +13,6 @@ find_package(CUDA QUIET REQUIRED)
 find_package(METIS REQUIRED)
 
 include_directories("${CMAKE_SOURCE_DIR}/include")
-include_directories("${CMAKE_SOURCE_DIR}/src/spmv/kernels")
+include_directories("${CMAKE_SOURCE_DIR}/src/spmv")
 
-subdirs(src)
+subdirs(src example)

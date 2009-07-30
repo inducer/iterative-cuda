@@ -107,6 +107,20 @@ namespace iterative_cuda
           size()*sizeof(value_type),
           cudaMemcpyDeviceToHost));
   }
+
+
+
+
+  template <typename VT, typename IT>
+  gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr()
+  { return pimpl->gpu_data; }
+
+
+
+
+  template <typename VT, typename IT>
+  const gpu_vector<VT, IT>::value_type *gpu_vector<VT, IT>::ptr() const
+  { return pimpl->gpu_data; }
 }
 
 
