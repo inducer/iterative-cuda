@@ -60,10 +60,18 @@ namespace iterative_cuda
 
 
   template <class GpuVector>
+  inline diagonal_preconditioner<GpuVector>::
+  ~diagonal_preconditioner()
+  { }
+
+
+
+
+  template <class GpuVector>
   inline void diagonal_preconditioner<GpuVector>::operator()(
       gpu_vector_type &result, gpu_vector_type const &op) const
   {
-    multiply(result, op, *pimpl->vec);
+    multiply(result, *pimpl->vec, op);
   }
 }
 

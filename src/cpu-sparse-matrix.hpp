@@ -133,7 +133,9 @@ namespace iterative_cuda
       {
         const index_type j = mat.Aj[jj];
         if (i == j)
-          d[i] = mat.Ax[jj];
+        {
+          d[i] += mat.Ax[jj];
+        }
       }
     }
   }

@@ -76,13 +76,19 @@ namespace iterative_cuda
 
       index_type size() const;
 
-      void from_cpu(value_type *cpu);
-      void to_cpu(value_type *cpu);
+      void from_cpu(value_type const *cpu);
+      void to_cpu(value_type *cpu) const;
 
       value_type *ptr();
       const value_type *ptr() const;
 
       void fill(value_type x);
+      void set_to_product(
+          gpu_vector const &x,
+          gpu_vector const &y);
+      void set_to_quotient(
+          gpu_vector const &x,
+          gpu_vector const &y);
       void set_to_linear_combination(
           value_type a,
           gpu_vector const &x,
@@ -214,6 +220,7 @@ namespace iterative_cuda
     public:
       // keeps a reference to vec
       diagonal_preconditioner(gpu_vector_type const &vec);
+      ~diagonal_preconditioner();
 
       void operator()(gpu_vector_type &result, gpu_vector_type const &op) const;
   };

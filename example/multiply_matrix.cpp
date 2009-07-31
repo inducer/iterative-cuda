@@ -28,6 +28,7 @@ SOFTWARE.
 #include <iterative-cuda.hpp>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 
 
@@ -59,14 +60,20 @@ int main(int argc, char **argv)
   for (int i = 0; i < gpu_mat.row_count(); ++i)
   {
     y1[i] = 0;
-    y2[i] = 0;
   }
 
   // do gpu matrix multiply
   gpu_vector<value_type> x_gpu(x, gpu_mat.column_count());
-  gpu_vector<value_type> y_gpu(y2, gpu_mat.row_count());
+  gpu_vector<value_type> y_gpu(gpu_mat.row_count());
 
-  gpu_mat(y_gpu, x_gpu);
+  gpu_vector<value_type> x_perm_gpu(gpu_mat.column_count());
+  gpu_vector<value_type> y_perm_gpu(gpu_mat.row_count());
+  gpu_mat.permute(x_perm_gpu, x_gpu);
+
+  y_perm_gpu.fill(0);
+  gpu_mat(y_perm_gpu, x_perm_gpu);
+
+  gpu_mat.unpermute(y_gpu, y_perm_gpu);
 
   y_gpu.to_cpu(y2);
   synchronize_gpu();
@@ -80,9 +87,9 @@ int main(int argc, char **argv)
   for (int i = 0; i < gpu_mat.row_count(); ++i)
   {
     error += (y1[i]-y2[i])*(y1[i]-y2[i]);
-    norm += x[i]*x[i];
+    norm += y1[i]*y1[i];
   }
-  std::cerr << error/norm << std::endl;
+  std::cerr << sqrt(error/norm) << std::endl;
 
   delete[] x;
   delete[] y1;

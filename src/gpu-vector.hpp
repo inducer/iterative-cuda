@@ -163,7 +163,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  inline void gpu_vector<VT, IT>::from_cpu(value_type *cpu)
+  inline void gpu_vector<VT, IT>::from_cpu(value_type const *cpu)
   {
     ICUDA_CHK(cudaMemcpy, (ptr(), cpu, 
           size()*sizeof(value_type),
@@ -174,7 +174,7 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
-  inline void gpu_vector<VT, IT>::to_cpu(value_type *cpu)
+  inline void gpu_vector<VT, IT>::to_cpu(value_type *cpu) const
   {
     ICUDA_CHK(cudaMemcpy, (cpu, ptr(),
           size()*sizeof(value_type),
@@ -200,9 +200,25 @@ namespace iterative_cuda
 
   template <typename VT, typename IT>
   inline void gpu_vector<VT, IT>::fill(value_type x)
-  {
-    iterative_cuda::fill(*this, x);
-  }
+  { iterative_cuda::fill(*this, x); }
+
+
+
+
+  template <typename VT, typename IT>
+  inline void gpu_vector<VT, IT>::set_to_product(
+      gpu_vector const &x,
+      gpu_vector const &y)
+  { multiply(*this, x, y); }
+
+
+
+
+  template <typename VT, typename IT>
+  void gpu_vector<VT, IT>::set_to_quotient(
+      gpu_vector const &x,
+      gpu_vector const &y)
+  { divide(*this, x, y); }
 
 
 
@@ -213,9 +229,7 @@ namespace iterative_cuda
       gpu_vector const &x,
       value_type b,
       gpu_vector const &y)
-  {
-    lc2(*this, a, x, b, y);
-  }
+  { lc2(*this, a, x, b, y); }
 
 
 
@@ -227,18 +241,14 @@ namespace iterative_cuda
       value_type b0,
       gpu_vector const &b1,
       gpu_vector const &y)
-  {
-    lc2(*this, a, x, b0, b1, y);
-  }
+  { lc2(*this, a, x, b0, b1, y); }
 
 
 
 
   template <typename VT, typename IT>
   inline gpu_vector<VT, IT> *gpu_vector<VT, IT>::dot(gpu_vector const &b) const
-  {
-    return inner_product(*this, b);
-  }
+  { return inner_product(*this, b); }
 }
 
 

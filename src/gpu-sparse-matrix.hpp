@@ -87,7 +87,7 @@ namespace iterative_cuda
       for (index_type i = 0; i < block_count; ++i)
         if (block_occupancy[i] > rows_per_packet)
         {
-          std::cerr << "Metis partition invalid, retrying..." << std::endl;
+          std::cerr << "Metis partition invalid, retrying with more parts..." << std::endl;
           partition_ok = false;
           block_count += 2 + int(1.02*block_count);
           break;
@@ -138,7 +138,7 @@ namespace iterative_cuda
       vector_type const &src) const
   {
     gather_device(dest.ptr(), src.ptr(), 
-        pimpl->matrix.permute_old_to_new, row_count());
+        pimpl->matrix.permute_new_to_old, row_count());
   }
 
 
@@ -150,7 +150,7 @@ namespace iterative_cuda
       vector_type const &src) const
   {
     gather_device(dest.ptr(), src.ptr(), 
-        pimpl->matrix.permute_new_to_old, row_count());
+        pimpl->matrix.permute_old_to_new, row_count());
   }
 
 

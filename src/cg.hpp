@@ -77,9 +77,10 @@ namespace iterative_cuda
 
     unsigned iterations = 0;
     vector_t ax(n);
-    vector_t residual(n);
     ax.fill(0);
     a(ax, x);
+
+    vector_t residual(n);
     residual.set_to_linear_combination(1, b, -1, ax);
 
     vector_t d(n);
@@ -124,7 +125,6 @@ namespace iterative_cuda
 
         scalar_t delta_new_host;
         delta_new->to_cpu(&delta_new_host);
-        std::cout << delta_new_host << std::endl;
         if (std::abs(delta_new_host) < tol*tol * std::abs(delta_0))
           break;
       }

@@ -28,6 +28,7 @@ SOFTWARE.
 #include <iterative-cuda.hpp>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 
 
@@ -36,63 +37,94 @@ using namespace iterative_cuda;
 
 int main(int argc, char **argv)
 {
+  srand48(49583344);
+
   if (argc != 2)
   {
     std::cerr << "usage: " << argv[0] << " matrix.mtx" << std::endl;
     return 1;
   }
-  typedef float value_type;
+  typedef double value_type;
   typedef cpu_sparse_csr_matrix<value_type> cpu_mat_type;
   typedef gpu_sparse_pkt_matrix<value_type> gpu_mat_type;
+  typedef gpu_vector<value_type> gvec_t;
+
   std::auto_ptr<cpu_mat_type> cpu_mat(
       cpu_mat_type::read_matrix_market_file(argv[1]));
 
+  unsigned n = cpu_mat->row_count();
+
+  value_type *diag = new value_type[n];
+  value_type *inv_diag = new value_type[n];
+  cpu_mat->extract_diagonal(diag);
+  for (int i = 0; i < n; ++i)
+  {
+    inv_diag[i] = 1./diag[i];
+  }
+  gvec_t inv_diag_gpu(inv_diag, n);
+  delete[] inv_diag;
+  delete[] diag;
+
   gpu_mat_type gpu_mat(*cpu_mat);
 
-  // build host vectors
-  unsigned n = gpu_mat.row_count();
-  value_type *b = new value_type[n];
-  value_type *x = new value_type[n];
-  value_type *b2 = new value_type[n];
+  gvec_t perm_inv_diag_gpu(n);
+  gpu_mat.permute(perm_inv_diag_gpu, inv_diag_gpu);
+  diagonal_preconditioner<gvec_t> diag_pre(perm_inv_diag_gpu);
 
-  for (int i = 0; i < gpu_mat.column_count(); ++i)
-  {
+  // build host vectors
+  value_type *b = new value_type[n];
+
+  for (int i = 0; i < n; ++i)
     b[i] = drand48();
-  }
 
   // transfer vectors to gpu
-  typedef gpu_vector<value_type> vec_t;
-  vec_t b_gpu(b, n);
-  vec_t x_gpu(n);
-  vec_t b2_gpu(n);
+  gvec_t b_gpu(b, n);
+  gvec_t b_perm_gpu(n);
+  gpu_mat.permute(b_perm_gpu, b_gpu);
 
-  x_gpu.fill(0);
-  b2_gpu.fill(0);
+  gvec_t x_perm_gpu(n);
+  x_perm_gpu.fill(0);
 
   std::cout << "begin solve" << std::endl;
 
   value_type tol;
-  if (sizeof(value_type) < 8) // ick
+  if (sizeof(value_type) < sizeof(double))
     tol = 1e-4;
   else
-    tol = 1e-8;
+    tol = 1e-12;
 
   unsigned it_count;
   gpu_cg(gpu_mat, 
-      identity_preconditioner<vec_t>(),
-      x_gpu, b_gpu, tol, /*max_iterations*/ 0, &it_count);
+      // identity_preconditioner<gvec_t>(),
+      diag_pre,
+      x_perm_gpu, b_perm_gpu, tol, /*max_iterations*/ 0, &it_count);
 
-  gpu_mat(b2_gpu, x_gpu);
+  gvec_t x_gpu(n);
+  gpu_mat.unpermute(x_gpu, x_perm_gpu);
 
-  vec_t residual_gpu(n);
-  residual_gpu.set_to_linear_combination(1, b2_gpu, -1, b_gpu);
+  value_type *x = new value_type[n];
+  x_gpu.to_cpu(x);
 
-  std::auto_ptr<vec_t> res_norm_gpu(residual_gpu.dot(residual_gpu));
-  value_type res_norm;
-  res_norm_gpu->to_cpu(&res_norm);
+  value_type *b2 = new value_type[n];
+  for (int i = 0; i < n; ++i)
+    b2[i] = 0;
+  (*cpu_mat)(b2, x);
 
-  std::cout << "residual norm " << res_norm << std::endl;
+  value_type error = 0;
+  value_type norm = 0;
+
+  for (int i = 0; i < gpu_mat.row_count(); ++i)
+  {
+    error += (b[i]-b2[i])*(b[i]-b2[i]);
+    norm += b[i]*b[i];
+  }
+
+  std::cerr << "residual norm " << sqrt(error/norm) << std::endl;
   std::cout << "iterations " << it_count << std::endl;
+
+  delete[] b;
+  delete[] x;
+  delete[] b2;
 
   return 0;
 }
