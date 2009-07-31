@@ -35,32 +35,29 @@ SOFTWARE.
 
 
 
-using namespace iterative_cuda;
-
-
-
-
+namespace iterative_cuda
+{
 #define INSTANTIATE(TP) \
   template class gpu_vector<TP>; \
   template class cpu_sparse_csr_matrix<TP>; \
   template class gpu_sparse_pkt_matrix<TP>; \
   template class diagonal_preconditioner<gpu_vector<TP> >; \
-  void gpu_cg( \
+  template void gpu_cg( \
       const gpu_sparse_pkt_matrix<TP> &a, \
-      const identity_preconditioner<gpu_vector<TP> > m_inv, \
-      gpu_vector<TP> const &x, \
+      const identity_preconditioner<gpu_vector<TP> > &m_inv, \
+      gpu_vector<TP> &x, \
       gpu_vector<TP> const &b, \
-      TP tol, \
-      unsigned max_iterations); \
-  void gpu_cg( \
+      TP tol, unsigned max_iterations, unsigned *it_count); \
+  template void gpu_cg( \
       const gpu_sparse_pkt_matrix<TP> &a, \
-      const diagonal_preconditioner<gpu_vector<TP> > m_inv, \
-      gpu_vector<TP> const &x, \
+      const diagonal_preconditioner<gpu_vector<TP> > &m_inv, \
+      gpu_vector<TP> &x, \
       gpu_vector<TP> const &b, \
-      TP tol, \
-      unsigned max_iterations);
+      TP tol, unsigned max_iterations, unsigned *it_count);
   
 
 
-INSTANTIATE(float);
-INSTANTIATE(double);
+
+  INSTANTIATE(float);
+  INSTANTIATE(double);
+}

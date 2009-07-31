@@ -199,6 +199,15 @@ namespace iterative_cuda
 
 
   template <typename VT, typename IT>
+  inline void gpu_vector<VT, IT>::fill(value_type x)
+  {
+    iterative_cuda::fill(*this, x);
+  }
+
+
+
+
+  template <typename VT, typename IT>
   inline void gpu_vector<VT, IT>::set_to_linear_combination(
       value_type a,
       gpu_vector const &x,

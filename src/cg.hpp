@@ -41,12 +41,12 @@ namespace iterative_cuda
   template <typename ValueType, typename IndexType, typename Operator, typename Preconditioner>
   inline void gpu_cg(
       const Operator &a,
-      const Preconditioner m_inv,
-      gpu_vector<ValueType, IndexType> const &x,
+      const Preconditioner &m_inv,
+      gpu_vector<ValueType, IndexType> &x,
       gpu_vector<ValueType, IndexType> const &b,
-      ValueType tol=1e-8,
-      unsigned max_iterations=0
-      )
+      ValueType tol,
+      unsigned max_iterations,
+      unsigned *it_count)
   {
     typedef gpu_vector<ValueType, IndexType> vector_t;
     typedef vector_t gpu_scalar_t; // such is life. :/
@@ -59,7 +59,7 @@ namespace iterative_cuda
 
     std::auto_ptr<vector_t> norm_b_squared_gpu(b.dot(b));
     scalar_t norm_b_squared;
-    norm_b_squared_gpu.to_cpu(&norm_b_squared);
+    norm_b_squared_gpu->to_cpu(&norm_b_squared);
 
     if (norm_b_squared == 0)
     {
@@ -78,14 +78,14 @@ namespace iterative_cuda
     unsigned iterations = 0;
     vector_t ax(n);
     vector_t residual(n);
+    ax.fill(0);
     a(ax, x);
     residual.set_to_linear_combination(1, b, -1, ax);
 
     vector_t d(n);
     m_inv(d, residual);
 
-    std::auto_ptr<gpu_scalar_t> delta_new(
-        residual.dot(d));
+    std::auto_ptr<gpu_scalar_t> delta_new(residual.dot(d));
 
     scalar_t delta_0;
     delta_new->to_cpu(&delta_0);
@@ -93,6 +93,7 @@ namespace iterative_cuda
     while (iterations < max_iterations)
     {
       vector_t q(n);
+      q.fill(0);
       a(q, d);
 
       gpu_scalar_t alpha(1);
@@ -104,6 +105,7 @@ namespace iterative_cuda
 
       if (calculate_real_residual)
       {
+        ax.fill(0);
         a(ax, x);
         residual.set_to_linear_combination(1, b, -1, ax);
       }
@@ -114,8 +116,7 @@ namespace iterative_cuda
       m_inv(s, residual);
 
       std::auto_ptr<gpu_scalar_t> delta_old(delta_new);
-      delta_new = std::auto_ptr<gpu_scalar_t>(
-          residual.dot(s));
+      delta_new = std::auto_ptr<gpu_scalar_t>(residual.dot(s));
 
       if (calculate_real_residual)
       {
@@ -123,7 +124,8 @@ namespace iterative_cuda
 
         scalar_t delta_new_host;
         delta_new->to_cpu(&delta_new_host);
-        if (std::abs(delta_new) < tol*tol * std::abs(delta_0))
+        std::cout << delta_new_host << std::endl;
+        if (std::abs(delta_new_host) < tol*tol * std::abs(delta_0))
           break;
       }
 
@@ -137,6 +139,9 @@ namespace iterative_cuda
 
     if (iterations == max_iterations)
       throw std::runtime_error("cg failed to converge");
+
+    if (it_count)
+      *it_count = iterations;
   }
 }
 

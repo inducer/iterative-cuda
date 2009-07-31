@@ -225,6 +225,33 @@ namespace iterative_cuda
     divide_kernel<VT><<<grid, block>>>(
         z.ptr(), x.ptr(), y.ptr(), x.size());
   }
+
+
+
+
+  template <class ValueType>
+  __global__ void fill_kernel(
+      ValueType *z, ValueType x, unsigned n)
+  {
+    unsigned tid = threadIdx.x;
+    unsigned total_threads = gridDim.x*blockDim.x;
+    unsigned cta_start = blockDim.x*blockIdx.x;
+    unsigned i;
+
+    for (i = cta_start + tid; i < n; i += total_threads) 
+      z[i] = x;
+  }
+
+
+
+
+  template <class VT, class IT>
+  void fill(gpu_vector<VT, IT> &z, VT x)
+  {
+    dim3 grid, block;
+    splay(z.size(), grid, block);
+    fill_kernel<VT><<<grid, block>>>(z.ptr(), x, z.size());
+  }
 }
 
 

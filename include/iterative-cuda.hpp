@@ -67,7 +67,7 @@ namespace iterative_cuda
       std::auto_ptr<gpu_vector_pimpl<value_type, index_type> > pimpl;
 
     public:
-      gpu_vector(index_type size);
+      explicit gpu_vector(index_type size);
       gpu_vector(value_type *cpu, index_type size);
       gpu_vector(gpu_vector const &src);
       ~gpu_vector();
@@ -82,6 +82,7 @@ namespace iterative_cuda
       value_type *ptr();
       const value_type *ptr() const;
 
+      void fill(value_type x);
       void set_to_linear_combination(
           value_type a,
           gpu_vector const &x,
@@ -188,7 +189,7 @@ namespace iterative_cuda
     public:
       typedef GpuVector gpu_vector_type;
 
-      void operator()(gpu_vector_type &result, gpu_vector_type const &op)
+      void operator()(gpu_vector_type &result, gpu_vector_type const &op) const
       {
         result = op;
       }
@@ -214,7 +215,7 @@ namespace iterative_cuda
       // keeps a reference to vec
       diagonal_preconditioner(gpu_vector_type const &vec);
 
-      void operator()(gpu_vector_type &result, gpu_vector_type const &op);
+      void operator()(gpu_vector_type &result, gpu_vector_type const &op) const;
   };
 
 
@@ -226,10 +227,12 @@ namespace iterative_cuda
   template <typename ValueType, typename IndexType, typename Operator, typename Preconditioner>
   void gpu_cg(
       const Operator &a,
-      gpu_vector<ValueType, IndexType> const &x,
+      const Preconditioner &m_inv,
+      gpu_vector<ValueType, IndexType> &x,
       gpu_vector<ValueType, IndexType> const &b,
       ValueType tol=1e-8,
-      const Preconditioner *m_inv=0);
+      unsigned max_iterations=0,
+      unsigned *itcount=0);
 }
 
 
