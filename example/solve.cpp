@@ -29,11 +29,27 @@ SOFTWARE.
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <sys/time.h>
 
 
 
 
 using namespace iterative_cuda;
+
+
+
+
+double get_time()
+{
+  const double TICKS_PER_SECOND = 1000*1000;
+  struct timeval tv;
+  struct timezone tz;
+  ::gettimeofday(&tv, &tz);
+  return double(tv.tv_sec) + double(tv.tv_usec)/TICKS_PER_SECOND;
+}
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -44,6 +60,7 @@ int main(int argc, char **argv)
     std::cerr << "usage: " << argv[0] << " matrix.mtx" << std::endl;
     return 1;
   }
+  // typedef double value_type;
   typedef double value_type;
   typedef cpu_sparse_csr_matrix<value_type> cpu_mat_type;
   typedef gpu_sparse_pkt_matrix<value_type> gpu_mat_type;
@@ -78,14 +95,15 @@ int main(int argc, char **argv)
     b[i] = drand48();
 
   // transfer vectors to gpu
+  std::cout << "begin solve" << std::endl;
+
+  double start = get_time();
   gvec_t b_gpu(b, n);
   gvec_t b_perm_gpu(n);
   gpu_mat.permute(b_perm_gpu, b_gpu);
 
   gvec_t x_perm_gpu(n);
   x_perm_gpu.fill(0);
-
-  std::cout << "begin solve" << std::endl;
 
   value_type tol;
   if (sizeof(value_type) < sizeof(double))
@@ -104,6 +122,7 @@ int main(int argc, char **argv)
 
   value_type *x = new value_type[n];
   x_gpu.to_cpu(x);
+  double stop = get_time();
 
   value_type *b2 = new value_type[n];
   for (int i = 0; i < n; ++i)
@@ -121,6 +140,8 @@ int main(int argc, char **argv)
 
   std::cerr << "residual norm " << sqrt(error/norm) << std::endl;
   std::cout << "iterations " << it_count << std::endl;
+  std::cout << "elapsed seconds " << stop-start << std::endl;
+  std::cout << "elapsed seconds per iteration " << (stop-start)/it_count << std::endl;
 
   delete[] b;
   delete[] x;
@@ -128,5 +149,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-
-
