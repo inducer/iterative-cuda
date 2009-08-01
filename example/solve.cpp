@@ -60,8 +60,11 @@ int main(int argc, char **argv)
     std::cerr << "usage: " << argv[0] << " matrix.mtx" << std::endl;
     return 1;
   }
-  // typedef double value_type;
+#if 0
+  typedef float value_type;
+#else
   typedef double value_type;
+#endif
   typedef cpu_sparse_csr_matrix<value_type> cpu_mat_type;
   typedef gpu_sparse_pkt_matrix<value_type> gpu_mat_type;
   typedef gpu_vector<value_type> gvec_t;
@@ -105,6 +108,7 @@ int main(int argc, char **argv)
   gvec_t x_perm_gpu(n);
   x_perm_gpu.fill(0);
 
+  // perform solve
   value_type tol;
   if (sizeof(value_type) < sizeof(double))
     tol = 1e-4;
@@ -120,6 +124,7 @@ int main(int argc, char **argv)
   gvec_t x_gpu(n);
   gpu_mat.unpermute(x_gpu, x_perm_gpu);
 
+  // compute residual on cpu
   value_type *x = new value_type[n];
   x_gpu.to_cpu(x);
   double stop = get_time();

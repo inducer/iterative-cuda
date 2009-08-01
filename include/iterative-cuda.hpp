@@ -133,7 +133,8 @@ namespace iterative_cuda
           index_type nonzero_count,
           const index_type *csr_row_pointers,
           const index_type *csr_column_indices,
-          const value_type *csr_nonzeros);
+          const value_type *csr_nonzeros,
+          bool take_ownership=true);
       ~cpu_sparse_csr_matrix();
 
       index_type row_count() const;

@@ -43,6 +43,7 @@ namespace iterative_cuda
   struct cpu_sparse_csr_matrix_pimpl
   {
     csr_matrix<IndexType, ValueType> matrix;
+    bool own_matrix;
   };
 
 
@@ -55,7 +56,8 @@ namespace iterative_cuda
       index_type nonzero_count,
       const index_type *csr_row_pointers,
       const index_type *csr_column_indices,
-      const value_type *csr_nonzeros)
+      const value_type *csr_nonzeros,
+      bool take_ownership)
   : pimpl(new cpu_sparse_csr_matrix_pimpl<VT, IT>)
   {
     pimpl->matrix.num_rows = row_count;
@@ -64,6 +66,7 @@ namespace iterative_cuda
     pimpl->matrix.Ap = const_cast<index_type *>(csr_row_pointers);
     pimpl->matrix.Aj = const_cast<index_type *>(csr_column_indices);
     pimpl->matrix.Ax = const_cast<value_type *>(csr_nonzeros);
+    pimpl->own_matrix = take_ownership;
   }
 
 
@@ -72,7 +75,8 @@ namespace iterative_cuda
   template <typename VT, typename IT>
   cpu_sparse_csr_matrix<VT, IT>::~cpu_sparse_csr_matrix()
   {
-    delete_csr_matrix(pimpl->matrix, HOST_MEMORY);
+    if (pimpl->own_matrix)
+      delete_csr_matrix(pimpl->matrix, HOST_MEMORY);
   }
 
 
