@@ -66,7 +66,7 @@ spmv_coo_flat_kernel(const IndexType num_nonzeros,
             else if(carry_idx[warp_lane] != first_idx)
                 y[carry_idx[warp_lane]] += carry_val[warp_lane];             // row terminated, does not span boundary
             else
-                atomicAdd(y + carry_idx[warp_lane], carry_val[warp_lane]);   // row terminated, but spans iter-warp boundary
+                myAtomicAdd(y + carry_idx[warp_lane], carry_val[warp_lane]);   // row terminated, but spans iter-warp boundary
         }
 
         // segmented reduction in shared memory
@@ -84,14 +84,14 @@ spmv_coo_flat_kernel(const IndexType num_nonzeros,
             if(idx[threadIdx.x] != first_idx)
                 y[idx[threadIdx.x]] += val[threadIdx.x];                     // row terminated, does not span inter-warp boundary
             else
-                atomicAdd(y + idx[threadIdx.x], val[threadIdx.x]);           // row terminated, but spans iter-warp boundary
+                myAtomicAdd(y + idx[threadIdx.x], val[threadIdx.x]);           // row terminated, but spans iter-warp boundary
         }
         
     }
 
     // final carry
     if(thread_lane == 31){
-        atomicAdd(y + carry_idx[warp_lane], carry_val[warp_lane]); 
+        myAtomicAdd(y + carry_idx[warp_lane], carry_val[warp_lane]); 
     }
 }
 

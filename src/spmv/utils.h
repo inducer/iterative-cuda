@@ -1,4 +1,6 @@
 /* Copyright 2008 NVIDIA Corporation.  All Rights Reserved */
+#ifndef ITCUDA_SPMV_UTILS
+#define ITCUDA_SPMV_UTILS
 
 #pragma once
 
@@ -28,7 +30,7 @@
 // dodgy.  It just does a bit comparison rather than a true floating
 // point comparison.  Hence 0 != -0, for instance.
 //
-static __inline__ __device__ float atomicAdd(float *addr, float val)
+static __inline__ __device__ float myAtomicAdd(float *addr, float val)
 {
     float old=*addr, assumed;
     
@@ -44,7 +46,7 @@ static __inline__ __device__ float atomicAdd(float *addr, float val)
 #endif // !defined(CUDA_NO_SM_11_ATOMIC_INTRINSICS)
 
 #if !defined(CUDA_NO_SM_13_DOUBLE_INTRINSICS)
-static __inline__ __device__ double atomicAdd(double *addr, double val)
+static __inline__ __device__ double myAtomicAdd(double *addr, double val)
 {
     double old=*addr, assumed;
     
@@ -208,3 +210,4 @@ void gather_device(ValueType * dest, const ValueType * src, const IndexType* map
 //    scatter_dev_kernel<IndexType,ValueType><<<grid,block>>>(dest,src,map,N);
 //}
 
+#endif
