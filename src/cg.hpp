@@ -98,7 +98,8 @@ namespace iterative_cuda
       a(q, d);
 
       gpu_scalar_t alpha(1);
-      divide(alpha, *delta_new, *d.dot(q));
+      std::auto_ptr<gpu_scalar_t> d_dot_q(d.dot(q));
+      divide(alpha, *delta_new, *d_dot_q);
 
       x.set_to_linear_combination(1, x, 1, alpha, d);
 
