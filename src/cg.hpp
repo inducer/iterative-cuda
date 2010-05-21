@@ -30,6 +30,7 @@ SOFTWARE.
 
 
 
+#include <algorithm>
 #include <iterative-cuda.hpp>
 #include "reduction.hpp"
 
@@ -57,6 +58,8 @@ namespace iterative_cuda
 
     unsigned n = a.row_count();
 
+    unsigned real_resid_interval = std::min(n, unsigned(50));
+
     std::auto_ptr<vector_t> norm_b_squared_gpu(b.dot(b));
     scalar_t norm_b_squared;
     norm_b_squared_gpu->to_cpu(&norm_b_squared);
@@ -68,7 +71,7 @@ namespace iterative_cuda
     }
 
     if (max_iterations == 0)
-      max_iterations = n;
+      max_iterations = 2*n;
 
     // typed up from J.R. Shewchuk, 
     // An Introduction to the Conjugate Gradient Method
@@ -99,11 +102,11 @@ namespace iterative_cuda
 
       gpu_scalar_t alpha(1);
       std::auto_ptr<gpu_scalar_t> d_dot_q(d.dot(q));
-      divide(alpha, *delta_new, *d_dot_q);
+      guarded_divide(alpha, *delta_new, *d_dot_q);
 
       x.set_to_linear_combination(1, x, 1, alpha, d);
 
-      bool calculate_real_residual = iterations % 50 == 0;
+      bool calculate_real_residual = iterations % real_resid_interval == 0;
 
       if (calculate_real_residual)
       {
@@ -126,12 +129,13 @@ namespace iterative_cuda
 
         scalar_t delta_new_host;
         delta_new->to_cpu(&delta_new_host);
+
         if (std::abs(delta_new_host) < tol*tol * std::abs(delta_0))
           break;
       }
 
       gpu_scalar_t beta(1);
-      divide(beta, *delta_new, *delta_old);
+      guarded_divide(beta, *delta_new, *delta_old);
 
       d.set_to_linear_combination(1, s, 1, beta, d);
 

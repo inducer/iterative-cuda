@@ -33,6 +33,8 @@ SOFTWARE.
 
 #include <utility>
 #include <memory>
+#include <iostream>
+#include <vector>
 #include <stdint.h>
 
 
@@ -104,6 +106,21 @@ namespace iterative_cuda
 
       gpu_vector *dot(gpu_vector const &b) const;
   };
+
+  template <typename ValueType, typename IndexType>
+  inline
+  std::ostream &operator<<(std::ostream &os, 
+      gpu_vector<ValueType, IndexType> const &vec)
+  {
+    std::vector<ValueType> tmp(vec.size());
+    vec.to_cpu(tmp.data());
+    os << '[';
+    for (unsigned i = 0; i < vec.size(); ++i)
+      os << tmp[i] << ' ';
+    os << ']';
+
+    return os;
+  }
 
 
 

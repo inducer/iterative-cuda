@@ -230,6 +230,38 @@ namespace iterative_cuda
 
 
   template <class ValueType>
+  __global__ void guarded_divide_kernel(
+      ValueType *z, ValueType const *x, ValueType const *y, unsigned n)
+  {
+    unsigned tid = threadIdx.x;
+    unsigned total_threads = gridDim.x*blockDim.x;
+    unsigned cta_start = blockDim.x*blockIdx.x;
+    unsigned i;
+
+    for (i = cta_start + tid; i < n; i += total_threads) 
+      z[i] = y[i] == 0 ? 0 : (x[i]/y[i]);
+  }
+
+
+
+
+  template <class VT, class IT>
+  void guarded_divide(
+      gpu_vector<VT, IT> &z,
+      gpu_vector<VT, IT> const &x,
+      gpu_vector<VT, IT> const &y
+      )
+  {
+    dim3 grid, block;
+    splay(x.size(), grid, block);
+    guarded_divide_kernel<VT><<<grid, block>>>(
+        z.ptr(), x.ptr(), y.ptr(), x.size());
+  }
+
+
+
+
+  template <class ValueType>
   __global__ void fill_kernel(
       ValueType *z, ValueType x, unsigned n)
   {
